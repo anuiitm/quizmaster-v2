@@ -1,18 +1,40 @@
-# QuizMaster - Data Export System
+# QuizMaster - Complete Quiz Management System
 
-This application includes a comprehensive data export system using Celery background tasks for both user and admin exports.
+A comprehensive quiz application built with Vue.js frontend and Flask backend, featuring user authentication, quiz creation, taking, and performance tracking.
 
 ## Features
 
-### User Exports
-- **Quiz History Export**: Users can export their complete quiz history to CSV format
-- **Real-time Status**: Progress tracking with modal notifications
-- **Automatic Download**: Files are automatically downloaded when ready
+### Admin Features
+- **Subject Management**: Create, edit, and delete subjects
+- **Chapter Management**: Organize content by chapters within subjects
+- **Quiz Creation**: Create quizzes with multiple choice questions
+- **User Management**: View all users and their performance
+- **Performance Analytics**: View summary statistics and charts
+- **User Search**: Search for users and their quiz results
 
-### Admin Exports  
-- **User Performance Export**: Admins can export all user performance data to CSV
-- **Comprehensive Data**: Includes total quizzes, average scores, highest/lowest scores, and last quiz dates
-- **Background Processing**: Large exports are handled asynchronously
+### User Features
+- **Quiz Taking**: Take quizzes with timer functionality
+- **Score Tracking**: View detailed score history
+- **Search Functionality**: Search for quizzes and subjects
+- **Performance Summary**: View overall performance statistics
+
+## Technologies Used
+
+### Frontend
+- **Vue.js 3** (Composition API)
+- **Vue Router** for navigation
+- **Axios** for HTTP requests
+- **Bootstrap 5** for styling
+- **Vite** for build tooling
+
+### Backend
+- **Flask** web framework
+- **SQLAlchemy** ORM
+- **SQLite** database
+- **Flask-Login** for authentication
+- **Flask-WTF** for CSRF protection
+- **Celery** for background tasks
+- **Redis** for message broker
 
 ## Setup Instructions
 
@@ -30,7 +52,7 @@ npm install
 
 ### 2. Install and Start Redis
 
-Redis is required for Celery message broker and result backend.
+Redis is required for Celery message broker.
 
 **macOS:**
 ```bash
@@ -54,7 +76,7 @@ Download from https://redis.io/download or use WSL.
 cd backend
 export FLASK_APP=app.py
 export FLASK_ENV=development
-flask run
+flask run --port=5001
 ```
 
 **Terminal 2 - Celery Worker:**
@@ -68,90 +90,81 @@ cd frontend
 npm run dev
 ```
 
-### 4. Usage
+### 4. Database Setup
 
-#### User Export
-1. Login as a regular user
-2. Navigate to "Scores" page
-3. Click "Export to CSV" button
-4. Wait for processing (modal will show progress)
-5. Click "Download CSV" when ready
+The application uses SQLite database which will be created automatically on first run.
 
-#### Admin Export
-1. Login as admin
-2. Navigate to "Users" page  
-3. Click "Export Performance Data" button
-4. Wait for processing (modal will show progress)
-5. Click "Download CSV" when ready
+## API Design
+
+### Authentication
+- **POST** `/api/auth/login` - User login
+- **POST** `/api/auth/register` - User registration
+- **POST** `/api/auth/logout` - User logout
+
+### Admin Endpoints
+- **GET** `/api/admin/subjects` - Get all subjects
+- **POST** `/api/admin/subject` - Create subject
+- **PUT** `/api/admin/subject/<id>` - Update subject
+- **DELETE** `/api/admin/subject/<id>` - Delete subject
+- **GET** `/api/admin/users` - Get all users
+- **GET** `/api/admin/summary` - Get admin summary data
+- **GET** `/api/admin/search/quizzes` - Search quizzes
+
+### User Endpoints
+- **GET** `/api/user/dashboard` - Get user dashboard data
+- **GET** `/api/user/quizzes` - Get available quizzes
+- **POST** `/api/user/quiz/<id>/submit` - Submit quiz answers
+- **GET** `/api/user/scores` - Get user scores
+- **GET** `/api/user/search` - Search quizzes and subjects
 
 ## File Structure
 
 ```
 backend/
 ├── api/
-│   ├── admin.py          # Admin export endpoints
-│   └── user.py           # User export endpoints
+│   ├── admin.py          # Admin API endpoints
+│   ├── auth.py           # Authentication endpoints
+│   ├── user.py           # User API endpoints
+│   └── cache.py          # Cache management
+├── models/
+│   └── model.py          # Database models
+├── utils/
+│   ├── cache.py          # Caching utilities
+│   ├── decorators.py     # Custom decorators
+│   └── performance.py    # Performance utilities
 ├── tasks.py              # Celery background tasks
 ├── celery_app.py         # Celery configuration
 ├── requirements.txt      # Python dependencies
-└── app.py               # Flask app with Celery init
+└── app.py               # Flask application
 
 frontend/
-├── src/views/
-│   ├── UserScores.vue   # User export UI
-│   └── AdminUsers.vue   # Admin export UI
-└── ...
-
-celery_worker.py          # Celery worker script
-exports/                  # Generated CSV files
+├── src/
+│   ├── components/       # Vue components
+│   ├── views/           # Page components
+│   ├── router/          # Vue Router configuration
+│   ├── stores/          # Pinia stores
+│   └── api/             # API client configuration
+├── public/              # Static assets
+└── package.json         # Node.js dependencies
 ```
 
-## API Endpoints
+## Security Features
 
-### User Export
-- `POST /api/user/export/quiz-history` - Start quiz history export
-- `GET /api/user/export/status/<task_id>` - Check export status
-- `GET /api/user/export/download/<filename>` - Download CSV file
+- **CSRF Protection**: All forms protected with CSRF tokens
+- **Session-based Authentication**: Secure user sessions
+- **Input Validation**: Server-side validation for all inputs
+- **Rate Limiting**: API rate limiting for abuse prevention
 
-### Admin Export
-- `POST /api/admin/export/user-performance` - Start user performance export
-- `GET /api/admin/export/status/<task_id>` - Check export status  
-- `GET /api/admin/export/download/<filename>` - Download CSV file
+## Performance Features
 
-## CSV Format
+- **Background Processing**: Celery tasks for heavy operations
+- **Caching**: Redis-based caching for improved performance
+- **Optimized Queries**: Efficient database queries with SQLAlchemy
 
-### User Quiz History
-- Quiz ID, Subject, Chapter, Quiz Date, Score, Date Taken
+## Development
 
-### Admin User Performance
-- User ID, User Name, Email, Total Quizzes Taken, Average Score, Highest Score, Lowest Score, Last Quiz Date
-
-## Troubleshooting
-
-### Redis Connection Issues
-```bash
-# Test Redis connection
-redis-cli ping
-# Should return "PONG"
-```
-
-### Celery Worker Issues
-```bash
-# Check Celery worker status
-celery -A backend.celery_app.celery status
-```
-
-### Export Directory Permissions
-```bash
-# Ensure exports directory is writable
-chmod 755 exports/
-```
-
-## Configuration
-
-Environment variables can be set in `.env`:
-```
-CELERY_BROKER_URL=redis://localhost:6379/0
-CELERY_RESULT_BACKEND=redis://localhost:6379/0
-FLASK_SECRET_KEY=your-secret-key
-``` 
+The application is built with modern development practices:
+- **Hot Reload**: Frontend development with Vite
+- **Type Safety**: JavaScript with proper typing
+- **Code Formatting**: Prettier and ESLint for code quality
+- **Modular Architecture**: Clean separation of concerns
